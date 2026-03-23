@@ -47,17 +47,22 @@ export default function App() {
         {
           responseType: "blob",
           timeout: 60000,
-        },
+          validateStatus: () => true, // ✅ important fix
+        }
       );
 
-      const url = URL.createObjectURL(res.data);
-      setResult(url);
+      const contentType = res.headers["content-type"];
+
+      if (contentType && contentType.includes("image")) {
+        const url = URL.createObjectURL(res.data);
+        setResult(url);
+      } else {
+        const text = await res.data.text();
+        throw new Error(text || "Image processing failed");
+      }
     } catch (err) {
       console.error(err);
-      alert(
-        err.response?.data?.message ||
-          "Server busy or waking up. Try again in a few seconds.",
-      );
+      alert(err.message || "Server error");
     }
 
     setLoading(false);
